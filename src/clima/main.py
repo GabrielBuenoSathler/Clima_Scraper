@@ -13,6 +13,7 @@ def connect_api(cidade):
         print("API com problemas")
         return None
 
+
 def insert_no_banco(key, value):
     if key == 'temp':
         print(f"TEMPERATURA: {value}")
@@ -24,11 +25,11 @@ def insert_no_banco(key, value):
         return None
     return value
 
+
 def main():
     lista = []
     cidade = 455825  # Rio de Janeiro
     data = connect_api(cidade)
-
     if data and 'results' in data:
         for key, value in data['results'].items():
             if key != 'forecast':
