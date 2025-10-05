@@ -26,68 +26,58 @@ def insert_no_banco(key, value):
     return value
 
 
-def main():
-    lista = []
-    cidade = 455825  # Rio de Janeiro
-    data = connect_api(cidade)
-    if data and 'results' in data:
-        for key, value in data['results'].items():
-            if key != 'forecast':
-                result = insert_no_banco(key, value)
-                if result is not None:
-                    lista.append(result)
 
-    
+
+def main():
+    load_dotenv()
+
+    host = os.getenv("host")
+    port = os.getenv("port")
+    database = os.getenv("dbname")
+    user = os.getenv("user")
+    password = os.getenv("password")
+
+    print(host, port, user, password)
+
+    conn_params = {
+        "host": host,
+        "port": port,
+        "database": database,
+        "user": user,
+        "password": password
+    }
+
+    try:
+        conn = psycopg2.connect(**conn_params)
+        print("Connected to the database!")
+
+        cur = conn.cursor()
+        cur.execute("SELECT woeid FROM woeids ");
+        row = cur.fetchall()
+        a = [x[0] for x in row]
+    except psycopg2.Error as e:
+        print("Error connecting to PostgreSQL:", e)
+
+    lista_woieds = a
+    for cidade in lista_woieds:
+        data = connect_api(cidade)
+        if data and 'results' in data:
+            lista = []
+            for key, value in data['results'].items():
+                if key != 'forecast':
+                    result = insert_no_banco(key, value)
+                    if result is not None:
+                        lista.append(result)
+            print(f"Dados finais para {cidade}: {lista}")
+            my_tuple = tuple(lista)
+            print(my_tuple)
+            cur.execute("INSERT INTO tempo (maxima, day,nome_cidade ) VALUES (%s, %s,%s)",my_tuple)
+    conn.commit()
+    cur.close()
+    conn.close()
 
 if __name__ == "__main__":
     main()
 
-load_dotenv()
-
-host = os.getenv("host")
-port =  os.getenv("port")
-database = os.getenv("dbname")
-user = os.getenv("user")
-password = os.getenv("password")
-print(host)
-print(port)
-print(user)
-print(password)
-
-conn_params = {
-    "host": host,
-    "port": port,
-    "database": database,
-    "user": user,
-    "password": password
-}
 
 
-
-
-# Connect to PostgreSQL
-try:
-    conn = psycopg2.connect(**conn_params)
-    print("Connected to the database!")
-
-   # Create a cursor to execute SQL
-    cur = conn.cursor()
-
-    # Example query
-    cur.execute("SELECT version();")
-    db_version = cur.fetchone()
-    print("Database version:", db_version)
-
-    # Clean up
-    
-    
-
-except psycopg2.Error as e:
-    print("Error connecting to PostgreSQL:", e)
-
-cur.execute("SELECT * FROM tempo")
-row = cur.fetchone()
-print(row)
-                            
-
-cur.close()
