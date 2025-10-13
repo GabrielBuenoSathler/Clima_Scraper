@@ -2,6 +2,8 @@ import requests
 import psycopg2
 from dotenv import load_dotenv
 import os
+from datetime import datetime
+
 
 def connect_api(cidade):
     url = f"https://api.hgbrasil.com/weather?woeid={cidade}"
@@ -69,9 +71,15 @@ def main():
                     if result is not None:
                         lista.append(result)
             print(f"Dados finais para {cidade}: {lista}")
-            my_tuple = tuple(lista)
-            print(my_tuple)
-            cur.execute("INSERT INTO tempo (maxima, day,nome_cidade ) VALUES (%s, %s,%s)",my_tuple)
+
+            temp, data_br, cidade_nome = lista
+
+# Converter data de '13/10/2025' para formato do PostgreSQL
+            data_pg = datetime.strptime(data_br, "%d/%m/%Y").date()
+            my_tuple = (temp, data_pg, cidade_nome)                                                           
+            print(my_tuple)                                                                         
+            cur.execute("INSERT INTO tempo (maxima, day,nome_cidade ) VALUES (%s, %s,%s)",my_tuple) 
+
     conn.commit()
     cur.close()
     conn.close()
